@@ -1,11 +1,13 @@
 use core::fmt;
 
+use lazy_static::lazy_static;
+use spin::Mutex;
 use volatile::Volatile;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
-pub enum Color {
+enum Color {
 	Black = 0,
     Blue = 1,
     Green = 2,
@@ -26,9 +28,9 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-pub struct ColorCode(u8);
+struct ColorCode(u8);
 impl ColorCode {
-	pub fn new(foreground: Color, background: Color) -> ColorCode {
+	fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
@@ -44,17 +46,26 @@ const BUFFER_HEIGHT: usize = 25;
 const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
-pub struct Buffer {
+struct Buffer {
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
-    pub column_position: usize,
-    pub color_code: ColorCode,
-    pub buffer: &'static mut Buffer,
+    column_position: usize,
+    color_code: ColorCode,
+    buffer: &'static mut Buffer,
 }
+
+lazy_static! {
+	pub static ref WRITER: Mutex<Writer> = Mutex::new( Writer {
+		column_position: 0,
+		color_code: ColorCode::new(Color::Yellow, Color::Black),
+		buffer: unsafe { &mut *(0xb8000 as *mut Buffer)}
+	});
+}
+
 impl Writer {
-    pub fn write_byte(&mut self, byte: u8) {
+    fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
             byte => {
@@ -92,7 +103,7 @@ impl Writer {
 				self.buffer.chars[row - 1][col].write(character);
 			}
 		}
-		// self.clear_row(BUFFER_HEIGHT - 1);
+		self.clear_row(BUFFER_HEIGHT - 1);
 		self.column_position = 0;
 	}
 

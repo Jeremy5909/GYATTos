@@ -3,7 +3,7 @@
 
 use core::{panic::PanicInfo, fmt::Write};
 
-use vga_buffer::{Buffer, Color, ColorCode, Writer};
+use crate::vga_buffer::WRITER;
 
 mod vga_buffer;
 
@@ -15,12 +15,7 @@ fn panic(_info: &PanicInfo) -> ! {
 #[no_mangle]
 // Use C calling convention
 pub extern "C" fn _start() -> ! {
-    let mut writer = Writer {
-        column_position: 0,
-        color_code: ColorCode::new(Color::Yellow, Color::Black),
-        buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
-    writer.write_str("Hello\nWorld").unwrap();
+    write!(WRITER.lock(), "Hello, World!").unwrap();
 
     loop {}
 }
