@@ -10,9 +10,11 @@ pub fn test_runner(tests: &[&dyn Fn()]) {
     for test in tests {
         test();
     }
+    exit_qemu(QemuExitCode::Success);
 }
 
 use core::panic::PanicInfo;
+use x86_64::instructions::port::Port;
 
 mod vga_buffer;
 
@@ -22,6 +24,20 @@ fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+pub enum QemuExitCode {
+    Success = 0x10,
+    Failed = 0x11,
+}
+
+pub fn exit_qemu(exit_code: QemuExitCode) {
+    unsafe {
+        let mut port = Port::new(0xf4);
+        port.write(exit_code as u32);
+    }
+}
+
 #[no_mangle]
 // Use C calling convention
 pub extern "C" fn _start() -> ! {
@@ -29,8 +45,8 @@ pub extern "C" fn _start() -> ! {
 
     #[cfg(test)]
     test_main();
-    
-    loop{}
+
+    loop {}
 }
 
 #[test_case]
