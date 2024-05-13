@@ -20,7 +20,7 @@ pub extern "C" fn _start() -> ! {
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     };
-    writer.write_str("Hello, World").unwrap();
+    writer.write_str("Hello\nWorld").unwrap();
 
     loop {}
 }
