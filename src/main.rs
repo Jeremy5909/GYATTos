@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
+use core::{panic::PanicInfo, fmt::Write};
 
 use vga_buffer::{Buffer, Color, ColorCode, Writer};
 
@@ -20,7 +20,7 @@ pub extern "C" fn _start() -> ! {
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
     };
-    writer.write_string("Hello, World!");
+    writer.write_str("Hello, World").unwrap();
 
     loop {}
 }

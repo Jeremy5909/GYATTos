@@ -1,3 +1,5 @@
+use core::fmt;
+
 use volatile::Volatile;
 
 #[allow(dead_code)]
@@ -72,7 +74,7 @@ impl Writer {
             }
         }
     }
-	pub fn write_string(&mut self, s: &str) {
+	fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
             match byte {
                 // printable ASCII byte or newline
@@ -84,4 +86,10 @@ impl Writer {
         }
     }
     fn new_line(&mut self) {/* TODO */}
+}
+impl fmt::Write for Writer {
+	fn write_str(&mut self, s: &str) -> fmt::Result {
+		self.write_string(s);
+		Ok(())
+	}
 }
